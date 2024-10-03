@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Test, console2} from "forge-std/Test.sol";
 
-import {MultisigBaseTest} from "./MultisigBase.sol";
+import {MultisigBaseTest} from "./MultisigBase.t.sol";
 
 contract MultisigTest is MultisigBaseTest {
     function testExploit() external validation {}
