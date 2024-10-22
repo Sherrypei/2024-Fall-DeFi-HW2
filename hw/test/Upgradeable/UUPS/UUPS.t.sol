@@ -9,6 +9,11 @@ import {Test, console2} from "forge-std/Test.sol";
 
 import {UUPSBaseTest} from "./UUPSBase.t.sol";
 
+
+
 contract UUPSTest is UUPSBaseTest {
-    function testExploit() external validation {}
+    function testExploit() external validation {
+        selfdestruct(payable(address(this)));
+    }
+
 }
