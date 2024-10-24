@@ -8,4 +8,6 @@ import {MultisigBaseTest} from "./MultisigBase.t.sol";
 
 contract MultisigTest is MultisigBaseTest {
     function testExploit() external validation {
-    }}
+        
+    }
+}
