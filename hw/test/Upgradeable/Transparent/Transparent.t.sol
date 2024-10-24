@@ -2,8 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {Test, console2} from "forge-std/Test.sol";
+
 import {TransparentBaseTest} from "./TransparentBase.t.sol";
 
 interface IProxy {
@@ -35,18 +38,28 @@ contract TransparentTest is TransparentBaseTest {
         // BadName Proxy //
         vm.startPrank(user);
         IBadName(address(proxy)).clash550254402();
+        count = IBadName(address(proxy)).count();
+        assertEq(count, 1);
+
+        IBadName(address(proxy)).upgradeTo();
+        count = IBadName(address(proxy)).count();
+        assertEq(count, 0);
         vm.stopPrank();
 
         // Upgrade Proxy //
         vm.startPrank(owner);
+        address addr = IProxy(address(proxy)).proxyOwner();
+        assertEq(addr, owner);
+
         IProxy(address(proxy)).upgradeTo(address(goodName));
+        assertEq(IProxy(address(proxy)).implementation(), address(goodName));
         vm.stopPrank();
 
-        // Verify New Implementation //
-        vm.prank(user);
-        count = IGoodName(address(proxy)).count();
+        // Default Value
+        count = IBadName(address(proxy)).count();
         assertEq(count, 0);
 
+        // GoodName Proxy
         vm.prank(user);
         IGoodName(address(proxy)).increment();
         count = IGoodName(address(proxy)).count();
@@ -54,7 +67,7 @@ contract TransparentTest is TransparentBaseTest {
 
         vm.prank(user);
         IGoodName(address(proxy)).decrement();
-        count = IGoodName(address(proxy)).count();
+        count = IBadName(address(proxy)).count();
         assertEq(count, 0);
     }
 }

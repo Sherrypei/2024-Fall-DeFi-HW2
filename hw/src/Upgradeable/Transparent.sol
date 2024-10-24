@@ -47,22 +47,40 @@ contract Proxy {
     }
 
     // Modifier //
-
-    // External & Public Function //
-    function upgradeTo(address _implementation) external {
-        _setImplementation(_implementation);
+    modifier ifAdmin() {
+        if (msg.sender == _getAdmin()) {
+            _;
+        } else {
+            _fallback();
+        }
     }
 
-    function proxyOwner() external view returns (address) {
+    // External & Public Function //
+    function upgradeTo(address _implementation) external ifAdmin {
+        _setImplementation(_implementation);
+        emit Upgraded(_implementation);
+    }
+
+    function changeAdmin(address _admin) external ifAdmin {
+        require(_admin != address(0), "New admin is zero address");
+        address previousAdmin = _getAdmin();
+        _setAdmin(_admin);
+        emit AdminChanged(previousAdmin, _admin);
+    }
+
+    function proxyOwner() external ifAdmin returns (address) {
         return _getAdmin();
     }
 
-    function implementation() external view returns (address) {
+    function implementation() external ifAdmin returns (address) {
         return _getImplementation();
     }
 
-    // Internal & Private Function //
+    // Events //
+    event AdminChanged(address previousAdmin, address newAdmin);
+    event Upgraded(address indexed implementation);
 
+    // Internal & Private Function //
     function _getAdmin() private view returns (address) {
         return StorageSlot.getAddressSlot(ADMIN_SLOT).value;
     }
@@ -81,7 +99,7 @@ contract Proxy {
         StorageSlot.getAddressSlot(IMPLEMENTATION_SLOT).value = _implementation;
     }
 
-    function _delegate(address _implementation) internal {
+    function _delegate(address _implementation) internal virtual {
         assembly {
             // Load free memory pointer
             let ptr := mload(0x40)
@@ -98,19 +116,26 @@ contract Proxy {
         }
     }
 
-    // Fallback & Receive Function //
+    function _beforeFallback() internal virtual {
+        require(msg.sender != _getAdmin(), "Admin cannot call implementation functions");
+    }
 
-    fallback() external payable {
+    function _fallback() internal virtual {
+        _beforeFallback();
         _delegate(_getImplementation());
     }
 
-    receive() external payable {
-        _delegate(_getImplementation());
+    // Fallback & Receive Function //
+    fallback() external payable virtual {
+        _fallback();
+    }
+
+    receive() external payable virtual {
+        _fallback();
     }
 }
 
 // External Library //
-
 library StorageSlot {
     struct AddressSlot {
         address value;
